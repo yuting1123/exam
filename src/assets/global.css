@@ -1,0 +1,105 @@
+/* 全局样式表 */
+html,
+body,
+#app{
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    /* 页面最小宽度 */
+    /* min-width: 1366px; */
+}
+/* 顶部导航条 */
+.navbar{
+  width: 90%;
+  /* background-color: blue; */
+  margin: 0 auto;
+  height:80px;
+}
+/* 顶部导航条头像区 */
+.logo{
+  margin: 15px 0;
+}
+.logo img{
+  height: 50px;
+  width: 130px;
+  /* margin-left: 40px; */
+  display: block;
+  float: right;
+}
+/* 顶部文字部分 */
+.general-title{
+  padding-left: 5px;
+  font-size: 19px;
+  line-height: 80px;
+  color:#727171;
+  font-weight: bold;
+}
+.general-title::before{
+  content: "·";
+}
+
+
+/* 登录按钮 */
+.login-info{
+  height: 80px;
+  /* position: relative; */
+}
+.login-info .login-button{
+  margin: 20px 20px;
+}
+
+/* 登录后的头像 */
+/* .login-info img{
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+} */
+.login-username{
+  color: #597bda;
+  font-size: 18px;
+  padding-top: 30px;
+}
+.login-username::after{
+  clear: both;
+  content: '';
+  display: block;
+  overflow: hidden;
+}
+.login-username .username{
+  float: left;
+  border-bottom:1px solid #597bda;
+}
+.login-username .username:hover{
+  cursor: pointer;
+}
+.login-username .user-pulldown{
+  /* display: block; */
+  /* line-height: 80px; */
+  float: left;
+  /* padding-left: 5px; */
+  /* width: 0; */
+  /* height: 0; */
+  /* border-left: 10px solid red;
+  border-right: 10px solid red; */
+  /* border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 10px solid red; */
+  /* text-decoration: none !important; */
+  width:6px;
+  height:6px;
+  border-top: 1px solid #597bda;
+  border-right: 1px solid #597bda;
+  transform: rotate(135deg);
+  margin: 9px 0 0 8px;
+  /* line-height: 80px; */
+}
+footer{
+  font-size: 14px;
+  color:#666666;
+  text-align: center;
+  border-top: 2px solid #ececec;
+  padding: 20px 0;
+}  
+
+
+
