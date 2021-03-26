@@ -37,6 +37,10 @@ body,
 .general-title::before{
   content: "·";
 }
+/* 题库下拉菜单 */
+/* .question-menu{
+  font-size: 18px!important;
+} */
 
 
 /* 登录按钮 */
@@ -56,8 +60,8 @@ body,
 } */
 .login-username{
   color: #597bda;
-  font-size: 18px;
-  padding-top: 30px;
+  font-size: 16px;
+  padding-top: 28px;
 }
 .login-username::after{
   clear: both;
@@ -73,18 +77,7 @@ body,
   cursor: pointer;
 }
 .login-username .user-pulldown{
-  /* display: block; */
-  /* line-height: 80px; */
   float: left;
-  /* padding-left: 5px; */
-  /* width: 0; */
-  /* height: 0; */
-  /* border-left: 10px solid red;
-  border-right: 10px solid red; */
-  /* border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 10px solid red; */
-  /* text-decoration: none !important; */
   width:6px;
   height:6px;
   border-top: 1px solid #597bda;
@@ -98,7 +91,9 @@ footer{
   color:#666666;
   text-align: center;
   border-top: 2px solid #ececec;
-  padding: 20px 0;
+  padding-top: 30px;
+  /* line-height: 100px; */
+  min-height: 80px;
 }  
 
 

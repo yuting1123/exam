@@ -17,9 +17,9 @@
           <el-dropdown placement="bottom-start" @command="goToQuestion">
             <el-menu-item style="font-size:16px;color:#909399;border-bottom:2px solid #597bda;">题库</el-menu-item>
             <el-dropdown-menu slot="dropdown" >
-              <!-- <el-dropdown-item command="/question">题目练习</el-dropdown-item> -->
-              <el-dropdown-item command="/testpaper">真题练习</el-dropdown-item>
+              <el-dropdown-item command="/question">题目练习</el-dropdown-item>
               <el-dropdown-item command="/interview">面经宝典</el-dropdown-item>
+              <!-- <el-dropdown-item command="/testpaper">真题练习</el-dropdown-item> -->
             </el-dropdown-menu>
           </el-dropdown>
         </el-menu>
@@ -39,7 +39,8 @@
               <div class="username">{{username}}</div>
               <div class="user-pulldown"></div>
             </div>
-            <el-dropdown-menu slot="dropdown" v-if="admin==='0'">
+            <el-dropdown-menu slot="dropdown" 
+            v-if="admin==='0'">
               <el-dropdown-item command="MyApply">我的申请</el-dropdown-item>
               <el-dropdown-item command="Logout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
@@ -73,7 +74,7 @@
           <div class="question">
             <div class="category">
               <i class="el-icon-s-data"></i>
-              <span>全部题目</span>
+              <span>全部模拟卷</span>
             </div>
             <div class="search-input">
               <el-input
@@ -85,30 +86,26 @@
               <el-button type="primary" v-else @click="cancleSeach">取消</el-button>
             </div>
 
-            <el-table
-              :data="question" stripe style="width: 100%" @row-click="tableRowClick">
-              <el-table-column type="index" width="100" align="center">
-              </el-table-column>
-              <el-table-column prop="name" label="题目" >
-              </el-table-column>
-              <el-table-column prop="categories" label="题型" width="140">
-              </el-table-column>
-              <!-- <el-table-column  width="140">
-                <template slot-scope="scope">
-                  <el-button type="primary" size="mini">做题{{scope.row.id}}</el-button>
-                </template>
-              </el-table-column> -->
-            </el-table>
+            <div class="test-content">
+              <div class="each-test" v-for="(item,index) in test" :key="index">
+                <div class="test-name">
+                  {{item.name}}
+                </div>
+                <el-button type="primary" plain v-if="examId"
+                @click="choosePaper(item._id)">选择试卷</el-button>
+                <el-button type="primary" plain v-else
+                @click="beginPractice(item._id)">开始练习</el-button>
+              </div>
+            </div>
           </div>
           <!-- 分页条 -->
           <div class="block">
-            <!-- <span class="demonstration">直接前往</span> -->
             <el-pagination
               background
               hide-on-single-page
               @current-change="handleCurrentChange"
               :current-page.sync="currentPage"
-              :page-size="2"
+              :page-size="queryInfo.num"
               layout="prev, pager, next"
               :total="total">
             </el-pagination>
@@ -132,6 +129,11 @@
 export default {
   data(){
     return{
+      // 创建考试跳转带的考试id
+      examId:'',
+      addExamForm:{
+        test:{},
+      },
       token:'',
       username:'',
       admin:'',
@@ -159,51 +161,46 @@ export default {
       total:0,
       // 所有题目分类
       questionCate:{
-        所有题目:'',
+        所有试卷:'',
         前端:'603d9f23fc781741efe8a981',
         后台:'603d9f45fc781741efe8a982',
         算法:'603e1f95d2f7244421f3df2e',
         产品:'603e1fb1d2f7244421f3df2f'
       },
-      question:[],
+      test:[],
     }
   },
   created(){
     this.token=window.sessionStorage.getItem('token')
     this.username=window.sessionStorage.getItem('username')
     this.admin=sessionStorage.getItem('admin')
-    this.getTotalQuestion()
-    this.getQuestion()
+    this.queryInfo.admin=sessionStorage.getItem('admin')
+    this.examId=this.$route.query.examId
+    console.log(this.queryInfo.admin)
+    this.getTotalTest()
+    this.getTest()
   },
   methods:{
-    // 测试接口
-    async getThreePage(){
-      console.log("获取第三页数据")
-      // const res=await this.$http.post()
-      console.log("获取第三页数据")
-    },
     // 获取题目信息
-    async getQuestion(){
-      const res=await this.$http.post('search/questions',this.queryInfo)
+    async getTest(){
+      const res=await this.$http.post('search/tests',this.queryInfo)
       console.log("请求的信息")
       console.log(this.queryInfo)
       console.log("题目信息")
-      console.log(res)
+      // console.log(res)
       res.data.forEach(value=>{
-        this.question.push({
-          _id:value._id,
-          name:value.name,
-          categories:value.categories[0].name
-        })
+        this.test.push(value)
       })
+      console.log(this.test)
     },
     // 获取题目总数
-    async getTotalQuestion(){
-      const res=await this.$http.post('questions/num',{
-        category_id:this.queryInfo.category_id
+    async getTotalTest(){
+      const res=await this.$http.post('tests/num',{
+        category_id:this.queryInfo.category_id,
+        admin:this.admin
       })
-      // console.log("总数")
-      // console.log(res)
+      console.log("总数")
+      console.log(res)
       this.total=res.data
     },
     // 登录名下拉栏跳转
@@ -218,46 +215,46 @@ export default {
         this.$router.push({name:this.loginSelectedCommand});
       }
     },
-    // 跳转到登录页面按钮
-    toLogin(){
-      this.$router.push({name:'Login'});
-    },
     // 分页条的当前页码改变时触发的函数
     async handleCurrentChange(newPage){
       // 重新进行请求，刷新表格数据
+      console.log("分页改变")
+      console.log(this.beforeJumpPage)
+      console.log(newPage)
       if(this.beforeJumpPage<newPage){
         // 从前往后跳
-        this.queryInfo.last_id=this.question[this.question.length-1]._id
+        this.queryInfo.last_id=this.test[this.test.length-1]._id
         this.queryInfo.from=this.beforeJumpPage
         this.queryInfo.to=newPage
-        this.question=[]
+        this.test=[]
         console.log("form")
         console.log(this.queryInfo.from)
-        this.getQuestion()
+        this.getTest()
         this.beforeJumpPage=newPage
       }
       if(this.beforeJumpPage>newPage){
-        this.queryInfo.last_id=this.question[0]._id
-        // this.queryInfo.last_id=this.test[0]._id
+        this.queryInfo.last_id=this.test[0]._id
         this.queryInfo.from=this.beforeJumpPage
         this.queryInfo.to=newPage
-        this.question=[]
-        console.log("form")
-        console.log(this.queryInfo.from)
-        const res=await this.$http.post('search/questions',this.queryInfo)
+        this.test=[]
+        // console.log("form")
+        // console.log(this.queryInfo.from)
+        const res=await this.$http.post('search/tests',this.queryInfo)
         
         console.log("请求的信息111")
         console.log(this.queryInfo)
-        // console.log("题目信息")
-        // console.log(res)
+        console.log("题目原信息")
+        console.log(res)
+        console.log("题目复制")
+        //  const rescopy=res.data
+        // console.log(rescopy)
         res.data.reverse().forEach(value=>{
-          this.question.push(value)
+          this.test.push(value)
         })
         this.beforeJumpPage=newPage
-        // console.log("逆转")
-        // console.log(this.question)
-      }
-      
+        console.log("逆转")
+        console.log(this.test)
+        }
     },
     
     // 题库下拉跳转
@@ -270,8 +267,8 @@ export default {
       this.showSeachBtn=false
       this.queryInfo.keyword=this.seachText
       console.log(this.queryInfo)
-      this.question=[]
-      this.getQuestion()
+      this.test=[]
+      this.getTest()
     },
     // 取消根据关键词查询题目
     cancleSeach(){
@@ -281,17 +278,39 @@ export default {
     changeCate(cateId){
       this.queryInfo.category_id=cateId
       console.log(this.queryInfo)
-      this.question=[]
-      this.getQuestion()
+      this.test=[]
+      this.getTest()
     },
-     // // 表格某一行被点击进入做题
-    tableRowClick(row){
-      console.log(row)
+    // 点击试卷开始练习
+    beginPractice(testID){
+      console.log(testID)
       this.$router.push({
-        path:'/detailquestion',
-        query:{questionId:row._id,categories:row.categories}
+        path:'/examination',
+        query:{
+          testId:testID,
+          examId:''
+        }
       })
     },
+    // 创建考试跳转过来选择试卷
+    async choosePaper(paperId){
+      console.log(paperId)
+      const chooseConfirm=await this.$confirm('是否确认选择该试卷', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).catch(err=>err)
+      if(chooseConfirm!='confirm'){
+        return
+      }
+      this.addExamForm.test._id=paperId
+
+      const res=await this.$http.put(`rest/test_items/${this.examId}`,this.addExamForm)
+      console.log("选择完毕输出返回")
+      console.log(res)
+      this.$router.push({path:'/createexam/create',query:{examId:this.examId}})
+    }
+   
 
   }
 }
@@ -367,14 +386,25 @@ export default {
   overflow: hidden;
   display: block;
 }
-.el-table--enable-row-hover .el-table__body tbody > tr:hover > td{
- cursor: pointer!important;
+.test-content{
+  padding: 10px 25px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.test-content .each-test{
+  width: 240px;
+  /* border:1px solid #ececec; */
+  margin: 10px 0;
+  text-align: center;
+  padding:15px 0;
+  line-height: 35px;
+  box-shadow: 0 0 5px rgb(124, 122, 122);
+  background-color: #8ea4e221
 }
 .block{
   text-align: center;
   padding: 20px 0;
 }
-.question >>> .el-table .cell:hover{
-  cursor: pointer;
-}
+
 </style>

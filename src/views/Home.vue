@@ -14,7 +14,16 @@
         <el-menu :default-active="this.$route.path" mode="horizontal" 
         @select="handleSelect" router>
           <el-menu-item index="/">首页</el-menu-item>
-          <el-menu-item index="/question">题库系统</el-menu-item>
+
+          <el-dropdown placement="bottom-start" @command="goToQuestion">
+            <el-menu-item style="font-size:16px">题库</el-menu-item>
+            <el-dropdown-menu slot="dropdown" >
+              <el-dropdown-item command="/question">题目练习</el-dropdown-item>
+              <el-dropdown-item command="/testpaper">真题练习</el-dropdown-item>
+              <el-dropdown-item command="/interview">面经宝典</el-dropdown-item>
+              
+            </el-dropdown-menu>
+          </el-dropdown>
         </el-menu>
       </el-col>
 
@@ -48,8 +57,34 @@
     </el-row>
     
     <!-- 首页轮播图 -->
-    <div class="map-box">
+    <!-- <div class="map-box">
+
       <img src="../assets/map/1.jpg" alt="">
+    </div> -->
+    <div class="slide-content">
+      <div class="slide-view">
+        <!-- <a> -->
+        <img v-for="(item,index) in slideImage" 
+        :key="index" 
+        :src="item.image" 
+        v-show="pageIndex==index" alt=""
+        @mouseenter="clearGoSlide"
+        @mouseleave="goSlide"
+        :class="pageIndex==index?'activeImage':''">
+        <!-- </a> -->
+        <!-- <span class="up-page">左</span> -->
+        <div class="left" @click="clickPage('up')"
+          @mouseenter="clearGoSlide"
+          @mouseleave="goSlide">&lt;</div>
+        <div class="right" @click="clickPage('next')"
+          @mouseenter="clearGoSlide"
+          @mouseleave="goSlide">&gt;</div>
+        <ul class="slide-index">
+          <li v-for="(item1,index1) in slideImage" :key="index1"
+          :class="pageIndex==index1?'active':''"></li>
+        </ul>
+      </div>
+
     </div>
 
     <!-- 部门介绍 -->
@@ -190,13 +225,12 @@ export default {
       activeRecruit:{},
       
       // 轮播图
-      lun:[
-        '../assets/map/1.jpg',
-        '../assets/map/2.jpg',
-        '../assets/map/3.jpg',
-        '../assets/map/4.png',
-        '../assets/map/5.jpg',
+      slideImage:[
       ],
+      // 轮播图当前图片的下标
+      pageIndex:0,
+      // 当前定时器interval，当书标一上去时就清除定时器，图片不再轮播
+      interId:null,
 
       // 部门信息
       department:{},
@@ -223,10 +257,13 @@ export default {
     // console.log(this.admin)
     // 获取简历数据
     this.getResume()
-    // if(this.token){
-    //   console.log(222);
-    // }
-    // console.log(sessionStorage.getItem('token'));
+    // 获取轮播图
+    this.getSlideImage()
+
+  },
+  // 页面构建完成以后要加载的事件
+  mounted(){
+    this.goSlide()
 
   },
   methods:{
@@ -237,6 +274,7 @@ export default {
       this.department=res.data
       console.log(this.department)
     },
+    // 获取简历
     async getResume(){
       if(this.user_id){
         const res=await this.$http.get(`vitae/${this.user_id}`)
@@ -247,6 +285,47 @@ export default {
         console.log(this.resume)
       }
     },
+    // 获取轮播图数据
+    async getSlideImage(){
+      const res =await this.$http.get('ads/list')
+      console.log("轮播图数据")
+      this.slideImage=res.data[0].items
+      console.log(this.slideImage)
+    },
+
+    // 轮播图效果
+    goSlide(){
+      // 开始改变变量
+      this.interId= setInterval(()=>{
+        this.pageIndex++
+        if(this.pageIndex==this.slideImage.length){
+          this.pageIndex=0
+        }
+      },1300)
+    },
+    // 清除计时器，图片不再轮播
+    clearGoSlide(){
+      clearInterval(this.interId);
+    },
+    // 点击图片上下一页
+    clickPage(clickAction){
+      if(clickAction==='up'){
+        if(this.pageIndex===0){
+          this.pageIndex=this.slideImage.length
+        }
+        this.pageIndex--;
+        
+      }
+      if(clickAction==='next'){
+        this.pageIndex++
+        if(this.pageIndex==this.slideImage.length){
+          this.pageIndex=0
+        }
+      }
+
+    },
+
+
     // 导航栏点击更换当前活跃页面(首页或题库)
     handleSelect(key,keyPath){
       console.log(key, keyPath);
@@ -269,6 +348,11 @@ export default {
         this.$router.push({name:this.loginSelectedCommand});
       }
       
+    },
+
+    // 题库下拉跳转
+    goToQuestion(command){
+      this.$router.push(command)
     },
     // 跳转到各部门的详细介绍页面
     toSingleRecruitIntro(recruit){
@@ -300,6 +384,8 @@ export default {
         console.log("res")
         console.log(res)
         this.$message.success("您已成功投递！")
+        this.departIntroDialogVisible=false
+        return
       }
       const toNewConfirm= await this.$confirm('您还没有简历，是否立即创建?', '提示', {
           confirmButtonText: '确定',
@@ -350,8 +436,6 @@ export default {
       }
     },
 
-    
-
   }
 }
 </script>
@@ -375,19 +459,76 @@ export default {
   font-size: 16px;
 }
 /* 轮播图 */
-.map-box{
-  /* width: 1226px; */
+.slide-content{
+  background-color: #f5f5f5;
 }
-.map-box img{
-  width: 100%;
-  height: 400px;
-  /* display: block */
+.slide-view{
+  position: relative;
+  width:81%;
+  margin:0 auto;
+  max-height: 400px;
+  border-left: 2px solid #ececec;
+  border-right: 2px solid #ececec;
+  height: 450px;
+  /* background-color: red; */
+  overflow: hidden;
+}
+.slide-content img{
+  width:100%;
+}
+/* .slide-view .activeImage{
+  opacity: 1;
+} */
+.slide-view .left, .slide-view .right{
+   position: absolute;
+   top: 40%;
+   /* transform: translateY(-50%); */
+   width: 60px;
+   height: 80px;
+   line-height: 80px;
+   background-color: #666;
+   opacity: 0.5;
+   text-align: center;
+   font-size: 60px;
+   color: #ccc;
+   /*先隐藏按钮*/
+   display: none;    
+   cursor: pointer;    /*设置鼠标悬停时的样式*/
+}
+
+.slide-view .right{
+  right: 0;
+}
+.slide-content:hover .left, .slide-content:hover .right{
+  /*鼠标悬停才容器范围内时显示按钮*/
+  display: block;            
+}
+.left:hover, .right:hover{
+  color: #fff;
+}
+.slide-index{
+  position: absolute;
+  top: 360px;
+  left: 50%;
+  transform:translateX(-50%);
+}
+.slide-index li{
+  list-style: none;    
+  float: left;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 10px;
+  background-color: #ccc;
+  cursor: pointer;
+}
+.slide-index .active{
+  background-color: #444;
 }
 
 /* 部门简介 */
 .depart{
   background-color: #f5f5f5;
-  /* background-color: red; */
 }
 .department{
   width: 81%;
@@ -403,7 +544,7 @@ export default {
   border-left: 2px solid #ececec;
   border-right: 2px solid #ececec;
   border-bottom: 1px solid #ececec;
-  padding: 18px 0;
+  padding: 35px 0;
   display: flex;
   justify-content: center;
   align-items: center;

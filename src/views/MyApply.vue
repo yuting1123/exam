@@ -14,7 +14,14 @@
       <el-col :span="12">
         <el-menu :default-active="this.$route.path" mode="horizontal" @select="handleSelect" router>
           <el-menu-item index="/" >首页</el-menu-item>
-          <el-menu-item index="/question">题库系统</el-menu-item>
+          <el-dropdown placement="bottom-start" @command="goToQuestion">
+            <el-menu-item style="font-size:16px;color:#909399">题库</el-menu-item>
+            <el-dropdown-menu slot="dropdown" >
+              <el-dropdown-item command="/question">题目练习</el-dropdown-item>
+              <el-dropdown-item command="/testpaper">真题练习</el-dropdown-item>
+              <el-dropdown-item command="/interview">面经宝典</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
         </el-menu>
       </el-col>
 
@@ -61,23 +68,78 @@
               </div>
               <div v-else class="present-apply">
                 <div v-for="(item,i) in myApply" :key="i" class="each-apply">
-                  <div class="apply-name">{{item.name}}</div>
+                  <!-- <div class="apply-name">{{item.name}}</div> -->
                   <div class="apply-info">
-                    所属项目组：{{item.belong}}
-                    <span>申请时间：{{item.apply_time}}</span>
+                    岗位：{{item.name}}
+                    <div>所属项目组：{{item.department.name}}</div>
                   </div>
-                  <div class="test-info">
-                    <div class="test-name">{{item.test_name}}</div>
-                    <el-button type="primary" round>进入考试</el-button>
+                  <div class="test-info" v-if="item.applyStatus==='notest'">
+                    尚未安排考试
+                  </div>
+                  <div class="test-info" v-else>
+                    <div class="test-name">{{item.test.name}}</div>
+                    <el-button type="primary" v-if="item.applyStatus=='future'" 
+                    disabled round >未开始</el-button>
+                    <el-button type="primary" v-if="item.applyStatus=='being'" round 
+                    @click="goToTest(item.test._id)">进入考试</el-button>
                     <div class="test-time">
-                      {{item.begin_time}}-
-                      <span>{{item.end_time}}</span>
+                      {{item.test.time[0] | dateFormat}}-
+                      {{item.test.time[1] | dateFormat}}
+                      <!-- {{item.begin_time}}-
+                      <span>{{item.end_time}}</span> -->
                     </div>
                   </div>
                 </div>
               </div>
             </el-tab-pane>
-            <el-tab-pane label="已归档申请" name="archiveApply">已归档申请</el-tab-pane>
+            <el-tab-pane label="已归档申请" name="finishApply">
+              <div v-if="finishApply.length==0">
+                无
+              </div>
+              <div v-else class="present-apply">
+                <div v-for="(item,i) in finishApply" :key="i" class="each-apply">
+                  <!-- <div class="apply-name">{{item.name}}</div> -->
+                  <div class="apply-info">
+                    岗位：{{item.name}}
+                    <div>所属项目组：{{item.department.name}}</div>
+                  </div>
+                  <div class="test-info">
+                    <div class="test-name">{{item.test.name}}</div>
+                    <div v-if="!item.answer">
+                      <el-button type="info" disabled>
+                      审核中</el-button>
+                      <div class="remind-info">请耐心等待！</div>
+                    </div>
+                    <div v-else>
+                      <div v-if="!item.answer.pass">
+                        <el-button type="info" disabled>
+                        未通过</el-button>
+                        <div class="remind-info">不要气馁，请继续加油！</div>
+                      </div>
+                      <div v-else>
+                        <el-button type="primary" disabled>已通过</el-button>
+                        <div v-if="item.answer.accept=='0'">
+                          <div class="remind-info" >恭喜！请选择是否加入</div>
+                          <el-button type="primary" size="mini" @click="submitOffer('accept',item.answer._id)">接受</el-button>
+                          <el-button type="primary" size="mini" @click="submitOffer('reject',item.answer._id)">拒绝</el-button>
+                        </div>
+                        <div v-if="item.answer.accept=='1'">
+                          <el-button type="text" disabled>已确认接受offer</el-button>
+                        </div>
+                        <div v-if="item.answer.accept=='-1'">
+                          <el-button type="text" disabled>已拒绝offer</el-button>
+                        </div>
+
+                      </div>
+                    </div>                    
+                    <div class="test-time">
+                      {{item.test.time[0] | dateFormat}}~
+                      <span>{{item.test.time[1] | dateFormat}}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </el-tab-pane>
           </el-tabs>
         </div>
       </div>
@@ -185,10 +247,6 @@
           <el-button type="primary" @click="toEditResume">修改</el-button>
         </div>
       </div>
-      <!-- <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
-      </span> -->
     </el-dialog>
     
     
@@ -217,46 +275,9 @@ export default {
       activeApply:'myApply',
       //正在进行中的申请myApply
       myApply:[
-        {
-          id:'1',
-          // a_flag:'present',
-          name:'web前端开发工程师',
-          belong:'舆情分析项目组',
-          apply_time:'2021-03-01',
-          test_name:'web前端开发在线考试',
-          begin_time:'2021-03-02 19:00',
-          end_time:'21:00',
-        },
-        {
-          id:'2',
-          // a_flag:'finished',
-          name:'web后台开发工程师',
-          belong:'舆情分析项目组',
-          apply_time:'2021-03-01',
-          begin_time:'2021-03-02 19:00',
-          end_time:'2021-0302 21:00',
-        }
       ],
       // 已归档的申请
-      archiveApply:[
-        {
-          id:'1',
-          // a_flag:'finished',
-          name:'web后台开发工程师',
-          belong:'舆情分析项目组',
-          apply_time:'2021-03-01',
-          begin_time:'2021-03-02 19:00',
-          end_time:'2021-0302 21:00',
-        },
-        {
-          id:'1',
-          // a_flag:'finished',
-          name:'web后台开发工程师',
-          belong:'舆情分析项目组',
-          apply_time:'2021-03-01',
-          begin_time:'2021-03-02 19:00',
-          end_time:'2021-0302 21:00',
-        }
+      finishApply:[
       ]
 
     }
@@ -264,19 +285,14 @@ export default {
   computed:{
     getEachTime(){
       return function(sTime){
-        // console.log(typeof(sTime))
-        // console.log(sTime)
         return sTime.split('T')[0];
       }
-      // console.log(typeof(sTime))
-      // console.log(sTime)
-      // return sTime.split('T')[0];
     }
   },
   created(){
     this.username=sessionStorage.getItem('username')
     this.user_id=sessionStorage.getItem('user_id')
-    console.log("通过id获取用户简历")
+    // console.log("通过id获取用户简历")
     // console.log(this.user_id)
     this.getUserResume(this.user_id)
     // 获取用户进度
@@ -287,15 +303,50 @@ export default {
     async getUserResume(user_id){
       const res=await this.$http.get(`vitae/${user_id}`)
       this.resume=res.data
-      console.log(this.resume);
+      // console.log("简历信息") 
+      // console.log(this.resume);
     },
     // 获取用户投递进度
     async getProgress(){
+      // console.log("用户id用户id用户id")
       console.log(this.user_id)
       if(this.user_id){
         const res=await this.$http.get(`schedule/${this.user_id}`)
-      console.log("用户进度信息res")
-      console.log(res)
+        console.log("用户进度信息res")
+        console.log(res)
+        // console.log(res.data.recruits)
+        var recruits=res.data.recruits
+
+        for(let i=0;i<recruits.length;i++){
+          console.log(recruits[i].test)
+          if(!recruits[i].test){
+            // console.log("还没有考试")
+            recruits[i].applyStatus='notest'
+            console.log(recruits[i])
+            this.myApply.push(recruits[i])
+          }
+          else{
+            recruits[i].applyStatus=this.judgeTime(recruits[i].test.time)
+            console.log("输出")
+            console.log(recruits[i])
+            // 已经结束的考试
+            if(recruits[i].applyStatus==='finish'){
+              // var test_time=recruits[i].test.time
+              // console.log("时间")
+              // console.log(test_time)
+              this.finishApply.push(recruits[i])
+            }
+            // 未开始的考试、进行中的考试放在我的申请里
+            else{
+              this.myApply.push(recruits[i])
+            }
+            
+          }  
+        }
+        console.log("未开始或进行中的")
+        console.log(this.myApply)
+        console.log("一结束的")
+        console.log(this.finishApply)
       }
       
     },
@@ -305,9 +356,6 @@ export default {
     },
     // 登录后头像下拉菜单项跳转
     goToLogout(command){
-      // this.loginSelectedCommand=command
-      // console.log(this.loginSelectedCommand);
-      // this.$router.push({name:this.loginSelectedCommand});
       if(command==='Logout'){
         window.sessionStorage.setItem('token','')
         window.sessionStorage.setItem('username','')
@@ -316,6 +364,10 @@ export default {
         this.$router.push('/')
       }
       
+    },
+    // 题库下拉跳转
+    goToQuestion(command){
+      this.$router.push(command)
     },
     // 点击切换标签页事件
     handleClick(tab) {
@@ -327,14 +379,6 @@ export default {
     },
     // 查看简历
     showResume(){
-      // let routeUrl=this.$router.resolve({
-      //   path:'/resume',query:{_id:this.resume_id}
-      // });
-
-      // window.open(routeUrl.href,'_blank');
-      // this.$router.push({
-      //   path:'/resume',query:{_id:this.resume_id}
-      // });
       this.ResumeDialogVisible=true;
     },
     // 查看简历对话框点击修改按钮，跳转到修改简历页面
@@ -343,7 +387,77 @@ export default {
         path:'/newresume',query:{resume_id:this.resume._id}
       })
     },
+    // 处理岗位开放时间，判断是正在进行/已归档
+    judgeTime(timeArray){
+      var dateBegin=new Date(timeArray[0])
+      var dateEnd=new Date(timeArray[1])
+      var dateNow=new Date()
+      console.log(dateNow)
+      console.log(dateBegin)
+      console.log(dateEnd)
+      //时间差的毫秒数
+      var beginDiff = dateNow.getTime() - dateBegin.getTime(); 
+      //时间差的毫秒数
+      var endDiff = dateEnd.getTime() - dateNow.getTime(); 
 
+      console.log(beginDiff+"-----"+endDiff)
+      if (endDiff < 0) {
+        console.log("已过期")
+        return 'finish';
+      }
+      if (beginDiff < 0) {
+        console.log("还没开始")
+        return 'future';
+      }
+      if(beginDiff>0&&endDiff>0){
+        console.log("进行中")
+        return 'being'
+      }
+    },
+    // 跳转进入考试
+    goToTest(examId){
+      this.$router.push({
+        path:'/examination',
+        query:{
+          examId:examId,
+          testId:''
+          }})
+      console.log("进入考试")
+    },
+    // 是否接受offer
+    async submitOffer(offer,answerId){
+      if(offer=='accept'){
+        const acceptConfirm= await this.$confirm('是否确定接受offer?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).catch(err=>err)
+        if(acceptConfirm!='confirm'){
+          return
+        }
+        await this.$http.put(`rest/answers/${answerId}`,{accept:'1'})
+        location.reload()
+
+        // console.log("发起请求")
+        // console.log(answerId)
+
+      }
+      else{
+        const rejectConfirm= await this.$confirm('是否确定拒绝offer?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).catch(err=>err)
+        if(rejectConfirm!='confirm'){
+          return
+        }
+        // console.log("发起请求")
+        // console.log(answerId)
+        await this.$http.put(`rest/answers/${answerId}`,{accept:'-1'})
+        location.reload()
+
+      }
+    }
   }
 }
 </script>
@@ -374,23 +488,36 @@ export default {
   border-right: 2px solid #ececec;
   padding: 15px 30px;
   color: #444;
-  
 }
 .apply .username{
   font-weight: bold;
 }
 .my-apply .present-apply{
-  /* background-color: #f5f5f5; */
-  /* padding:10px 20px; */
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
 }
 .my-apply .present-apply .each-apply{
   background-color: #f5f5f5;
-  /* width: 95%; */
+  width: 300px;
   /* margin: 0 auto;
   padding-top: 10px; */
-  margin-bottom: 8px;
+  margin:0 10px 8px 10px;
   padding: 10px 20px;
   /* border-bottom: 2px solid #ececec; */
+}
+.each-apply .apply-info div{
+  padding-top: 10px;
+}
+.each-apply .test-info{
+  font-size: 15px;
+  line-height: 40px;
+  margin: 10px 0;
+  padding: 15px 0;  
+  text-align: center;
+  /* width: 30%; */
+  background-color: #fff;
+  border:1px solid #ececec;
 }
 /* 查看简历弹窗 */
 .resume-box{
@@ -461,5 +588,9 @@ export default {
 }
 .edit-btn{
   text-align: center;
+}
+.remind-info{
+  font-size: 12px;
+  color: rgb(104, 103, 103)
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="interview-container">
     <!-- 首页导航条 -->
     <el-row class="navbar">
       <el-col :span="4" class="logo">
@@ -17,9 +17,9 @@
           <el-dropdown placement="bottom-start" @command="goToQuestion">
             <el-menu-item style="font-size:16px;color:#909399;border-bottom:2px solid #597bda;">题库</el-menu-item>
             <el-dropdown-menu slot="dropdown" >
-              <!-- <el-dropdown-item command="/question">题目练习</el-dropdown-item> -->
+              <el-dropdown-item command="/question">题目练习</el-dropdown-item>
               <el-dropdown-item command="/testpaper">真题练习</el-dropdown-item>
-              <el-dropdown-item command="/interview">面经宝典</el-dropdown-item>
+              <!-- <el-dropdown-item command="/interview">面经宝典</el-dropdown-item> -->
             </el-dropdown-menu>
           </el-dropdown>
         </el-menu>
@@ -53,7 +53,7 @@
       </el-col>
 
     </el-row>
-    <!-- 题库主体区域 -->
+    <!-- 主体区域 -->
     <div class="main">
       <div class="question-bank-box">
         <div class="question-category-box">
@@ -86,18 +86,11 @@
             </div>
 
             <el-table
-              :data="question" stripe style="width: 100%" @row-click="tableRowClick">
+              :data="interviews" stripe style="width: 100%" @row-click="tableRowClick">
               <el-table-column type="index" width="100" align="center">
               </el-table-column>
               <el-table-column prop="name" label="题目" >
               </el-table-column>
-              <el-table-column prop="categories" label="题型" width="140">
-              </el-table-column>
-              <!-- <el-table-column  width="140">
-                <template slot-scope="scope">
-                  <el-button type="primary" size="mini">做题{{scope.row.id}}</el-button>
-                </template>
-              </el-table-column> -->
             </el-table>
           </div>
           <!-- 分页条 -->
@@ -108,7 +101,7 @@
               hide-on-single-page
               @current-change="handleCurrentChange"
               :current-page.sync="currentPage"
-              :page-size="2"
+              :page-size="queryInfo.num"
               layout="prev, pager, next"
               :total="total">
             </el-pagination>
@@ -116,18 +109,26 @@
         </div>
       </div>
     </div>
-    
-    
-    
-    <!-- 底部 -->
-    <footer>
-      Copyright @数据挖掘实验室, All right reserved.
-    </footer>
-</div>  
 
- 
+    <!-- 显示面试题详情的对话框 -->
+    <el-dialog
+      :visible.sync="showInterviewDialogVisible"
+      width="50%"
+      @closed="closeShowInterview"
+      >
+      <div class="interview-info-box">
+        <div class="interview-title">
+          {{activeInterview.name}}
+        </div>
+        <div class="interview-answer">
+          {{activeInterview.answers}}
+        </div>
+
+      </div>
+    </el-dialog>
+
+  </div>
 </template>
-
 <script>
 export default {
   data(){
@@ -135,6 +136,9 @@ export default {
       token:'',
       username:'',
       admin:'',
+      interviews:[],
+      // 点击详情面试题信息
+      activeInterview:{},
       // 当前分类（默认所有题目）
       activeCate:'',
       // 题目搜索框的双向绑定数据
@@ -152,7 +156,7 @@ export default {
         from:'',
         to:'',
         admin:'',
-        num:2,
+        num:1,
         keyword:''
       },
       // 题目总数
@@ -165,47 +169,42 @@ export default {
         算法:'603e1f95d2f7244421f3df2e',
         产品:'603e1fb1d2f7244421f3df2f'
       },
-      question:[],
+      showInterviewDialogVisible:false
+      
+
     }
   },
   created(){
     this.token=window.sessionStorage.getItem('token')
     this.username=window.sessionStorage.getItem('username')
     this.admin=sessionStorage.getItem('admin')
-    this.getTotalQuestion()
+    this.getTotalInterview()
     this.getQuestion()
+
   },
   methods:{
-    // 测试接口
-    async getThreePage(){
-      console.log("获取第三页数据")
-      // const res=await this.$http.post()
-      console.log("获取第三页数据")
-    },
-    // 获取题目信息
     async getQuestion(){
-      const res=await this.$http.post('search/questions',this.queryInfo)
+      const res=await this.$http.post('search/interviews',this.queryInfo)
       console.log("请求的信息")
       console.log(this.queryInfo)
-      console.log("题目信息")
-      console.log(res)
+      // console.log(res)
       res.data.forEach(value=>{
-        this.question.push({
-          _id:value._id,
-          name:value.name,
-          categories:value.categories[0].name
-        })
+        this.interviews.push(value)
       })
+      console.log("题目信息")
+      console.log(this.interviews)
     },
     // 获取题目总数
-    async getTotalQuestion(){
-      const res=await this.$http.post('questions/num',{
-        category_id:this.queryInfo.category_id
+    async getTotalInterview(){
+      const res=await this.$http.post('interviews/num',{
+        category_id:this.queryInfo.category_id,
+        admin:this.admin
       })
-      // console.log("总数")
-      // console.log(res)
+      console.log("总数")
+      console.log(res)
       this.total=res.data
     },
+
     // 登录名下拉栏跳转
     goToSingleCommand(command){
       if(command=='Logout'){
@@ -218,51 +217,69 @@ export default {
         this.$router.push({name:this.loginSelectedCommand});
       }
     },
-    // 跳转到登录页面按钮
-    toLogin(){
-      this.$router.push({name:'Login'});
+    // 题库下拉跳转
+    goToQuestion(command){
+      this.$router.push(command)
+    },
+
+    // 点击类别，按分类获取题目
+    changeCate(cateId){
+      this.queryInfo.category_id=cateId
+      console.log(this.queryInfo)
+      this.interviews=[]
+      this.getQuestion()
     },
     // 分页条的当前页码改变时触发的函数
     async handleCurrentChange(newPage){
       // 重新进行请求，刷新表格数据
+      console.log("分页改变")
+      console.log(this.beforeJumpPage)
+      console.log(newPage)
       if(this.beforeJumpPage<newPage){
         // 从前往后跳
-        this.queryInfo.last_id=this.question[this.question.length-1]._id
+        this.queryInfo.last_id=this.interviews[this.interviews.length-1]._id
         this.queryInfo.from=this.beforeJumpPage
         this.queryInfo.to=newPage
-        this.question=[]
+        this.interviews=[]
         console.log("form")
         console.log(this.queryInfo.from)
         this.getQuestion()
         this.beforeJumpPage=newPage
       }
       if(this.beforeJumpPage>newPage){
-        this.queryInfo.last_id=this.question[0]._id
-        // this.queryInfo.last_id=this.test[0]._id
+        this.queryInfo.last_id=this.interviews[0]._id
         this.queryInfo.from=this.beforeJumpPage
         this.queryInfo.to=newPage
-        this.question=[]
-        console.log("form")
-        console.log(this.queryInfo.from)
-        const res=await this.$http.post('search/questions',this.queryInfo)
+        this.interviews=[]
+        const res=await this.$http.post('search/interviews',this.queryInfo)
         
         console.log("请求的信息111")
         console.log(this.queryInfo)
-        // console.log("题目信息")
-        // console.log(res)
+        console.log("题目原信息")
+        console.log(res)
+        console.log("题目复制")
+        //  const rescopy=res
+        // console.log(rescopy)
         res.data.reverse().forEach(value=>{
-          this.question.push(value)
+          this.interviews.push(value)
         })
         this.beforeJumpPage=newPage
-        // console.log("逆转")
-        // console.log(this.question)
-      }
-      
+        console.log("逆转")
+        console.log(this.interviews)
+        }
     },
-    
-    // 题库下拉跳转
-    goToQuestion(command){
-      this.$router.push(command)
+    // // 表格某一行被点击进入做题
+    tableRowClick(row){
+      this.activeInterview=row
+      this.showInterviewDialogVisible=true
+      console.log(row._id)
+      // this.$router.push({
+      //   path:'/detailquestion',
+      //   query:{questionId:row._id,categories:row.categories}
+      // })
+    },
+    closeShowInterview(){
+      this.activeInterview={}
     },
     // 根据关键词查询题目
     keyWordSeach(){
@@ -270,33 +287,18 @@ export default {
       this.showSeachBtn=false
       this.queryInfo.keyword=this.seachText
       console.log(this.queryInfo)
-      this.question=[]
+      this.interviews=[]
       this.getQuestion()
     },
     // 取消根据关键词查询题目
     cancleSeach(){
       this.showSeachBtn=true
     },
-    // 点击类别，按分类获取题目
-    changeCate(cateId){
-      this.queryInfo.category_id=cateId
-      console.log(this.queryInfo)
-      this.question=[]
-      this.getQuestion()
-    },
-     // // 表格某一行被点击进入做题
-    tableRowClick(row){
-      console.log(row)
-      this.$router.push({
-        path:'/detailquestion',
-        query:{questionId:row._id,categories:row.categories}
-      })
-    },
+    
 
   }
 }
 </script>
-
 <style scoped>
 /* 顶部右侧导航栏 */
 .el-menu{
@@ -316,7 +318,6 @@ export default {
   font-size: 16px;
   margin-right: 15px;
 }  
-
 /* 主体区域 */
 .main{
   /* border-top: 2px solid red; */
@@ -376,5 +377,19 @@ export default {
 }
 .question >>> .el-table .cell:hover{
   cursor: pointer;
+}
+.interview-container>>>.el-dialog__header{
+  padding: 0!important;
+  margin-bottom: 0!important;
+}
+.interview-title{
+  font-size: 18px; 
+  color: #444;
+  font-weight: bold;
+}
+.interview-answer{
+  color: #444;
+  font-size: 16px;
+  padding: 10px 0;
 }
 </style>

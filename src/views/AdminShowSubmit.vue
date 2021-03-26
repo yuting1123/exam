@@ -1,6 +1,6 @@
 <template>
-  <el-container style="height: 500px; border: 1px solid #eee">
-    <el-aside width="200px" style="background-color: rgb(238, 241, 246)">
+  <el-container style="height: 100%; border: 1px solid #eee">
+    <el-aside width="300px" style="background-color: rgb(238, 241, 246)">
       <el-menu 
         unique-opened
         router 
@@ -79,10 +79,6 @@ export default {
     else{
       this.activeRecruitId=window.sessionStorage.getItem('activeRecruitId')
     }
-    // console.log("1111")
-    // console.log(this.$route.path)
-    // console.log(this.activeRecruitId)
-    // console.log("222")
     this.getDepartment()
   },
   watch:{
@@ -143,7 +139,7 @@ export default {
 }
 .link-box{
   float: left;
-  margin-left: 820px;
+  margin-left: 720px;
 }
 .user-info{
   float:right;
@@ -161,6 +157,9 @@ export default {
   content: '';
   display:block;
   overflow: hidden;
+}
+.user-info:hover{
+  cursor: pointer;
 }
 .user-info .username{
   float: left;

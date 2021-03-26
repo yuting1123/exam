@@ -121,7 +121,6 @@
                 <el-form-item label="项目时间" 
                   :prop="'projects.' + index + '.project_time'"
                   :rules="[{required:true,message:'请输入项目时间',trigger:'blur'}]">
-                  <!-- <el-input v-model="item.project_time"></el-input> -->
                   <el-date-picker
                     v-model="item.project_time"
                     type="daterange"
@@ -169,7 +168,6 @@
                     type="date"
                     placeholder="选择日期">
                   </el-date-picker>
-                  <!-- <el-input v-model="item.project_time"></el-input> -->
                 </el-form-item>
                 <el-form-item label="奖项详情" 
                   :prop="'awards.' + index + '.awards_detail'"
@@ -198,16 +196,8 @@
                 <el-button type="info" @click="resetResume">放弃填写</el-button>
               </div>
             </el-tab-pane>
-          </el-tabs>
-
-        
+          </el-tabs>        
         </el-form>
-
-        <!-- 每个步骤的下一步按钮 -->
-        <!-- <el-button style="margin-top: 12px;" 
-        @click="next">下一步</el-button> -->
-
-
       </div>
     </div>
 
@@ -215,26 +205,6 @@
     <footer>
       Copyright @数据挖掘实验室, All right reserved.
     </footer>
-    
-    
-
-    
-
-    <!-- <el-form>
-    <el-form-item label="照片" > -->
-            <!-- action,上传地址，在main.js中
-            getAuthHeaders()加请求头，在main.js中 -->
-            <!-- <el-upload
-            class="avatar-uploader"
-            :action='uploadUrl'
-            :headers="getAuthHeaders()"
-            :show-file-list="false"
-            :on-success="afterUpload">
-            <img v-if="model.avator" :src="model.avator" class="avatar">
-            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-            </el-upload>
-    </el-form-item>
-    </el-form> -->
   </div>
 </template>
 <script>

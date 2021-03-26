@@ -10,12 +10,29 @@ import MyApply from '../views/MyApply.vue'
 import NewResume from '../views/NewResume.vue'
 // 登录页面
 import Login from '../views/Login.vue'
-// 题库页面
+// 题库所有题目页面
 import Question from '../views/Question.vue'
-// 管理员查看投递情况页面
+// 题库真题页面
+import TestPaper from '../views/TestPaper.vue'
+// 题库面经宝典页面
+import Interview from '../views/Interview.vue'
+// 进入考试页面
+import Examination from '../views/Examination.vue'
+// 进入练习题目详情页面
+import DeatilQuestion from '../views/DetailQuestion.vue'
+// 管理员查看投递情况页面首页
 import AdminShowSubmit from '../views/AdminShowSubmit.vue'
 // 管理员创建试卷、考试页面
 import AdminCreateTest from '../views/AdminCreateTest.vue'
+import CreateTestPaper from '../views/admin/CreateTestPaper.vue'
+// import EditTestPaper from '../views/admin/EditTestPaper.vue'
+import ListTestPaper from '../views/admin/ListTestPaper.vue'
+import ListExam from '../views/admin/ListExam.vue'
+import CreateExam from '../views/admin/CreateExam.vue'
+// 管理员创建题目页面
+import CreateQuestion from '../views/admin/CreateQuestion.vue'
+import ListQuestion from '../views/admin/ListQuestion.vue'
+
 // 查看岗位投递人信息的页面
 import WelcomeToResctuit from '../views/admin/WelcomeToResctuit.vue'
 import ShowSubmit from '../views/admin/ShowSubmit.vue'
@@ -60,6 +77,26 @@ const routes = [
     component:Question
   },
   {
+    path:'/testpaper',
+    name:'TestPaper',
+    component:TestPaper
+  },
+  {
+    path:'/interview',
+    name:'Interview',
+    component:Interview
+  },
+  {
+    path:'/examination',
+    name:'Examination',
+    component:Examination
+  },
+  {
+    path:'/detailquestion',
+    name:'DeatilQuestion',
+    component:DeatilQuestion
+  },
+  {
     path:'/resumesubmit',
     name:'AdminShowSubmit',
     component:AdminShowSubmit,
@@ -75,16 +112,52 @@ const routes = [
         name:'ShowSubmit',
         component:ShowSubmit
       }
-      
-
-
     ]
   },
   {
     path:'/createtest',
     name:'AdminCreateTest',
-    component:AdminCreateTest
-  }
+    component:AdminCreateTest,
+    redirect:'/createtest/welcome',
+    children:[
+      {
+        path:'/createtest/welcome',
+        name:'WelcomeToTest',
+        component:WelcomeToResctuit
+      },
+      {
+        path:'/createtest/create',
+        name:'CreateTestPaper',
+        component:CreateTestPaper
+      },
+      {
+        path:'/createtest/list',
+        name:'ListTestPaper',
+        component:ListTestPaper
+      },
+      {
+        path:'/createexam/list',
+        name:'ListExam',
+        component:ListExam
+      },
+      {
+        path:'/createexam/create',
+        name:'CreateExam',
+        component:CreateExam
+      },
+      {
+        path:'/question/list',
+        name:'ListQuestion',
+        component:ListQuestion
+      },
+      {
+        path:'/question/create',
+        name:'CreateQuestion',
+        component:CreateQuestion
+      }
+    ]
+  },
+  
 ]
 
 const router = new VueRouter({
